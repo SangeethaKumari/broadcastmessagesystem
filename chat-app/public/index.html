@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anonymous Chat App</title>
+    <title>Anonymous Chat App with Direct Messaging</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
         #chat { max-width: 500px; margin: 50px auto; background: white; padding: 0; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; }
@@ -15,12 +15,18 @@
         #form { display: flex; padding: 10px; }
         #input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
         #send { padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        #user-select { margin: 10px; padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
     <div id="chat">
         <!-- Username Label -->
         <div id="username-label">Connecting...</div>
+
+        <!-- User Selection Dropdown -->
+        <select id="user-select">
+            <option value="">Broadcast to All</option>
+        </select>
 
         <ul id="messages"></ul>
         <form id="form">
@@ -36,27 +42,44 @@
         const input = document.getElementById('input');
         const messages = document.getElementById('messages');
         const usernameLabel = document.getElementById('username-label');
+        const userSelect = document.getElementById('user-select');
 
         let username = 'Anonymous';
 
         // Receive assigned username from the server
         socket.on('assign username', (assignedUsername) => {
             username = assignedUsername;
-            usernameLabel.textContent = `You are: ${username}`;  // Display the username
+            usernameLabel.textContent = `You are: ${username}`;
             console.log(`You are identified as ${username}`);
+        });
+
+        // Update user list
+        socket.on('update users', (userList) => {
+            userSelect.innerHTML = '<option value="">Broadcast to All</option>';
+            userList.forEach((user) => {
+                if (user !== username) {
+                    const option = document.createElement('option');
+                    option.value = user;
+                    option.textContent = user;
+                    userSelect.appendChild(option);
+                }
+            });
         });
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             if (input.value) {
-                displayMessage(`${username}: ${input.value}`, 'sent'); // Display for sender
-                socket.emit('chat message', input.value);              // Send to the server
+                displayMessage(`${username}: ${input.value}`, 'sent');
+                socket.emit('chat message', {
+                    message: input.value,
+                    recipient: userSelect.value || null
+                });
                 input.value = '';
             }
         });
 
         socket.on('chat message', function(msg) {
-            displayMessage(`${msg.user}: ${msg.text}`, 'received');    // Display with sender's username
+            displayMessage(`${msg.user}: ${msg.text}`, 'received');
         });
 
         function displayMessage(message, type) {
