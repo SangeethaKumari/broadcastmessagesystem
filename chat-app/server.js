@@ -14,7 +14,7 @@ io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
     socket.on('chat message', (msg) => {
-        io.emit('chat message', msg); // Broadcast message to all connected clients
+        socket.broadcast.emit('chat message', msg); // Send to all clients except sender
     });
 
     socket.on('disconnect', () => {

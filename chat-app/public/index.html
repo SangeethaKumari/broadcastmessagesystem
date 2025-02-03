@@ -6,9 +6,11 @@
     <title>Simple Chat App</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        #chat { max-width: 500px; margin: 50px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-        #messages { list-style-type: none; padding: 0; max-height: 300px; overflow-y: scroll; }
-        #messages li { padding: 8px 10px; border-bottom: 1px solid #ddd; }
+        #chat { max-width: 500px; margin: 50px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; height: 80vh; }
+        #messages { list-style-type: none; padding: 0; flex-grow: 1; overflow-y: scroll; display: flex; flex-direction: column; }
+        #messages li { max-width: 70%; margin: 5px; padding: 10px; border-radius: 10px; word-wrap: break-word; }
+        .sent { background-color: #dcf8c6; align-self: flex-end; text-align: right; }
+        .received { background-color: #fff; align-self: flex-start; text-align: left; border: 1px solid #ddd; }
         #form { display: flex; }
         #input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
         #send { padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
@@ -34,17 +36,23 @@
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             if (input.value) {
-                socket.emit('chat message', input.value);
+                displayMessage(input.value, 'sent'); // Display the message for the sender
+                socket.emit('chat message', input.value); // Send to the server
                 input.value = '';
             }
         });
 
         socket.on('chat message', function(msg) {
+            displayMessage(msg, 'received'); // Display the received message
+        });
+
+        function displayMessage(message, type) {
             const item = document.createElement('li');
-            item.textContent = msg;
+            item.textContent = message;
+            item.classList.add(type); // Apply the class based on message type
             messages.appendChild(item);
             messages.scrollTop = messages.scrollHeight; // Auto-scroll
-        });
+        }
     </script>
 </body>
 </html>
