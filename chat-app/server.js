@@ -1,5 +1,3 @@
-// server.js (Node.js with Express and Socket.io)
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -10,15 +8,24 @@ const io = new Server(server);
 
 app.use(express.static('public'));
 
+// Function to generate random usernames
+function generateUsername() {
+    return 'User' + Math.floor(Math.random() * 1000);
+}
+
 io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+    const username = generateUsername();
+    console.log(`${username} connected:`, socket.id);
+
+    // Send the assigned username to the client
+    socket.emit('assign username', username);
 
     socket.on('chat message', (msg) => {
-        socket.broadcast.emit('chat message', msg); // Send to all clients except sender
+        socket.broadcast.emit('chat message', { user: username, text: msg }); // Send with username
     });
 
     socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
+        console.log(`${username} disconnected:`, socket.id);
     });
 });
 

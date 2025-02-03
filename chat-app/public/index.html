@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Chat App</title>
+    <title>Anonymous Chat App</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        #chat { max-width: 500px; margin: 50px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; height: 80vh; }
-        #messages { list-style-type: none; padding: 0; flex-grow: 1; overflow-y: scroll; display: flex; flex-direction: column; }
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        #chat { max-width: 500px; margin: 50px auto; background: white; padding: 0; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; }
+        #username-label { text-align: center; font-weight: bold; padding: 10px; background: #007bff; color: white; border-radius: 8px 8px 0 0; font-size: 16px; }
+        #messages { list-style-type: none; padding: 10px; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
         #messages li { max-width: 70%; margin: 5px; padding: 10px; border-radius: 10px; word-wrap: break-word; }
         .sent { background-color: #dcf8c6; align-self: flex-end; text-align: right; }
         .received { background-color: #fff; align-self: flex-start; text-align: left; border: 1px solid #ddd; }
-        #form { display: flex; }
+        #form { display: flex; padding: 10px; }
         #input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
         #send { padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="chat">
+        <!-- Username Label -->
+        <div id="username-label">Connecting...</div>
+
         <ul id="messages"></ul>
         <form id="form">
             <input id="input" autocomplete="off" placeholder="Type a message..." />
@@ -28,30 +32,39 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-
         const form = document.getElementById('form');
         const input = document.getElementById('input');
         const messages = document.getElementById('messages');
+        const usernameLabel = document.getElementById('username-label');
+
+        let username = 'Anonymous';
+
+        // Receive assigned username from the server
+        socket.on('assign username', (assignedUsername) => {
+            username = assignedUsername;
+            usernameLabel.textContent = `You are: ${username}`;  // Display the username
+            console.log(`You are identified as ${username}`);
+        });
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             if (input.value) {
-                displayMessage(input.value, 'sent'); // Display the message for the sender
-                socket.emit('chat message', input.value); // Send to the server
+                displayMessage(`${username}: ${input.value}`, 'sent'); // Display for sender
+                socket.emit('chat message', input.value);              // Send to the server
                 input.value = '';
             }
         });
 
         socket.on('chat message', function(msg) {
-            displayMessage(msg, 'received'); // Display the received message
+            displayMessage(`${msg.user}: ${msg.text}`, 'received');    // Display with sender's username
         });
 
         function displayMessage(message, type) {
             const item = document.createElement('li');
             item.textContent = message;
-            item.classList.add(type); // Apply the class based on message type
+            item.classList.add(type);
             messages.appendChild(item);
-            messages.scrollTop = messages.scrollHeight; // Auto-scroll
+            messages.scrollTop = messages.scrollHeight;
         }
     </script>
 </body>
