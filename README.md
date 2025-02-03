@@ -1,5 +1,3 @@
-Here's the **README** content for your basic chat app with the original broadcast functionality (where messages were visible to all connected users):
-
 ---
 
 # 📩 Simple Real-Time Chat App
