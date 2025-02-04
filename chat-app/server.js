@@ -32,26 +32,42 @@ function getBotResponse(message, callback) {
     });
 }
 
-// Handle messages
+
+
+
+
 function handleMessage(sender, message, recipient = null) {
-    if (recipient === "@bot") {
-        getBotResponse(message, (botReply) => {
-            io.to(users[sender]).emit('chat message', { user: 'LLAMA Bot', text: botReply });
-        });
+    console.log(`recipient is: ${recipient}`);
+
+    // Check if the message contains @bot, regardless of the recipient value
+    if (message.toLowerCase().startsWith('@bot')) {
+        console.log("recipient is bot:");
+
+        // Remove '@bot' from the message before sending to LLAMA model
+       getBotResponse("Respond in English: " + message.replace('@bot', '').trim(), (botReply) => {
+    io.to(users[sender]).emit('chat message', { user: 'LLAMA Bot', text: botReply });
+    });
+
     } else if (recipient && users[recipient]) {
+        // Private message to a specific user
         io.to(users[recipient]).emit('chat message', { user: sender, text: message });
     } else {
+        // Broadcast message to all users
         io.emit('chat message', { user: sender, text: message });
     }
 }
+
+
 
 io.on('connection', (socket) => {
     const username = generateUsername();
     users[username] = socket.id;
 
     console.log(`${username} connected:`, socket.id);
+
     socket.emit('assign username', username);
     io.emit('update users', Object.keys(users));  // Send updated user list
+
 
     socket.on('chat message', ({ message, recipient }) => {
         handleMessage(username, message, recipient);
